@@ -74,11 +74,18 @@ User Sends PATCH (If-Match: ETag)
      └→ If Fail → Error (E_CONCURRENCY_FAILED) + ROLLBACK
 ```
 
+### 🔢 Checklist: Що перевіряти для Concurrency Control
+- Чи є поле `last_changed_at` з анотацією `@Semantics.systemLastChangedAt`
+- Чи включено `lock master; validate_lock;` в Behavior Definition
+- Чи реалізовано `LOCK` для Unmanaged RAP
+- Чи реалізовано `VALIDATE_LOCK` для додаткових перевірок
+- Чи правильно обробляється If-Match на користувацькому UI
+
 ---
 
 ## 📅 Extended Summary: Concurrency Control in SAP RAP (Markdown, 🇬🇧)
 
-### Key Topics
+### Main Topics
 - Optimistic Locking
 - Pessimistic Locking
 - OCC via `last_changed_at`
@@ -87,7 +94,7 @@ User Sends PATCH (If-Match: ETag)
 - Methods: LOCK, VALIDATE_LOCK, UPDATE
 
 ### 🔄 What is Concurrency Control in RAP?
-Concurrency Control in SAP RAP ensures that parallel changes to business objects do not corrupt data.
+Concurrency Control in SAP RAP ensures that parallel changes to business objects do not corrupt the data.
 
 ### ✅ Basic Scenario (Managed RAP)
 
@@ -104,23 +111,23 @@ lock master;
 validate_lock;
 ```
 
-- ETag is auto-generated from `last_changed_at`
-- RAP automatically checks If-Match during updates
+- ETag is automatically generated from `last_changed_at`
+- RAP automatically checks If-Match
 
 ### ❌ Non-Basic Scenario (Unmanaged RAP)
 
 You must manually implement:
 
-- `LOCK`: manual check of `last_changed_at`
-- `VALIDATE_LOCK`: business validations
-- `UPDATE`, `DELETE`, `CREATE`: manual data persistence
+- `LOCK`: manual last_changed_at check
+- `VALIDATE_LOCK`: additional validations
+- `UPDATE`, `DELETE`, `CREATE`: explicit data persistence
 
 ### 📈 Examples
 
 **Managed RAP:**
 - `last_changed_at` field in CDS.
 - `lock master; validate_lock;` in Behavior Definition.
-- No additional implementation required.
+- No additional method implementation needed.
 
 **Unmanaged RAP:**
 ```abap
@@ -138,7 +145,7 @@ METHOD lock_salesorder.
 ENDMETHOD.
 ```
 
-### 🛍️ Diagram: Save + OCC Pipeline
+### 🛍️ Diagram: Save + OCC Service Pipeline
 
 ```plaintext
 READ Entity
@@ -151,6 +158,13 @@ User Sends PATCH (If-Match: ETag)
      └→ If OK → SAVE + COMMIT
      └→ If Fail → Error (E_CONCURRENCY_FAILED) + ROLLBACK
 ```
+
+### 🔢 Checklist: What to Check for Concurrency Control
+- Ensure `last_changed_at` field with `@Semantics.systemLastChangedAt` annotation
+- `lock master; validate_lock;` present in Behavior Definition
+- Implement `LOCK` method for Unmanaged RAP
+- Implement `VALIDATE_LOCK` method for additional consistency checks
+- Ensure If-Match is correctly handled at the client/UI level
 
 ---
 
