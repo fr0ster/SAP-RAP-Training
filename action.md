@@ -10,16 +10,23 @@
 - [Action Validations](https://help.sap.com/docs/abap-cloud/abap-rap/validations)
 
 ### 🔄 Що таке Action в SAP RAP
-**Action** — це explicit (експліцитна, явно викликана) операція над об'єктом, що запускається явно користувачем (UI або API).
+**Action** — це explicit (експліцитна, явно викликана) операція над об'єктом, яка є **нестандартною модифікаційною операцією** (non-standard modify operation). Вона не є частиною стандартних операцій, таких як читання (Read), створення (Create), оновлення (Update) або видалення (Delete) бізнес-об'єктів.
+
+> 📢 Стандартні операції в RAP: Read, Create, Update, Delete, Lock.
+> Всі інші зміни через Actions вважаються нестандартними модифікаціями.
 
 > 🔍 **Приклади:** Approve Order, Reject Request, Post Invoice.
 
-### 🔢 Типи Actions
+### 🔢 Типи Actions (Behavior Definition)
 
 | Тип | Опис |
 |:----|:-----|
 | **Instance Action** | Прив'язана до конкретного об'єкта (ID) |
 | **Static Action** | Виконується без прив'язки до конкретного ID |
+| **Internal Action** | Може бути викликана лише зсередини BO (наприклад, із determination) |
+| **Repeatable Action** | Може бути виконана кілька разів на одному екземплярі в одному запиті |
+| **Factory Action** | Створює нові екземпляри об'єкта |
+| **Save Action** | Викликається тільки під час фази Save (FINALIZE або ADJUST_NUMBERS)
 
 ### ✏️ Визначення Actions у Behavior Definition
 ```abap
@@ -33,6 +40,15 @@ lock master
 ```
 
 ### 👩‍💻 Реалізація Actions у Behavior Implementation
+
+| Тип Імплементації | Опис |
+|:------------------|:-----|
+| **Instance Action** | Імпортує `%key` і опціонально `%cid_ref` |
+| **Static Action** | Імпортує `%cid` як operation ID |
+| **Action with Parameters** | Імпортує `%param` для вхідних параметрів |
+| **Action with Result Entity** | Імпортує `%cid` для новостворених екземплярів |
+| **Factory Action** | Імпортує `%cid` і `%cid_ref`, створює нові об'єкти |
+
 ```abap
 METHOD approve.
   LOOP AT keys INTO DATA(ls_key).
@@ -46,6 +62,7 @@ ENDMETHOD.
 ### 🛠️ Транзакційна поведінка Actions
 - Actions виконуються в рамках транзакції Save.
 - Якщо Action змінює дані, потрібно повернути `result`.
+- Save Actions дозволені тільки в Save Sequence.
 
 ### 📝 Draft-enabled Actions
 ```abap
@@ -86,16 +103,23 @@ lock master
 - [Action Validations](https://help.sap.com/docs/abap-cloud/abap-rap/validations)
 
 ### 🔄 What are Actions in SAP RAP
-**Action** — an explicit operation on a business object, triggered by the user (UI or API).
+**Action** — an explicit non-standard modify operation on a business object, triggered by the user (UI or API).
+
+> 📢 Standard operations in RAP cover: Read, Create, Update, Delete, Lock.
+> All other changes via Actions are considered non-standard modifications.
 
 > 🔍 **Examples:** Approve Order, Reject Request, Post Invoice.
 
-### 🔢 Types of Actions
+### 🔢 Types of Actions (Behavior Definition)
 
 | Type | Description |
 |:-----|:------------|
-| **Instance Action** | Tied to a specific object (ID) |
+| **Instance Action** | Linked to a specific object (ID) |
 | **Static Action** | Executed without reference to a specific ID |
+| **Internal Action** | Executed only internally within the BO (e.g., from a determination) |
+| **Repeatable Action** | Can be executed multiple times on the same instance within one request |
+| **Factory Action** | Creates new entity instances |
+| **Save Action** | Can be triggered only during Save Sequence (FINALIZE or ADJUST_NUMBERS)
 
 ### ✏️ Defining Actions in Behavior Definition
 ```abap
@@ -109,6 +133,15 @@ lock master
 ```
 
 ### 👩‍💻 Implementing Actions in Behavior Implementation
+
+| Implementation Type | Description |
+|:---------------------|:------------|
+| **Instance Action** | Imports `%key` and optionally `%cid_ref` |
+| **Static Action** | Imports `%cid` as operation ID |
+| **Action with Parameters** | Imports `%param` for input parameters |
+| **Action with Result Entity** | Imports `%cid` to identify newly created entities |
+| **Factory Action** | Imports `%cid` and `%cid_ref` for instance creation |
+
 ```abap
 METHOD approve.
   LOOP AT keys INTO DATA(ls_key).
@@ -120,8 +153,9 @@ ENDMETHOD.
 ```
 
 ### 🛠️ Transactional behavior of Actions
-- Actions are executed as part of the Save transaction.
-- If the Action modifies data, it must return a `result`.
+- Actions are executed within Save transactions.
+- Actions modifying data must return `result`.
+- Save Actions can only be triggered during Save Sequence.
 
 ### 📝 Draft-enabled Actions
 ```abap
@@ -146,6 +180,7 @@ lock master
 - Avoid modifying fundamental fields (`key fields`, `created_by`, `created_at`) unless necessary.
 - For critical processes, ensure ETag checking to prevent concurrent modification issues.
 - Use transactional control (`ROLLBACK`) on failures to maintain data consistency.
-- For draft-enabled objects, separately handle drafts and active entities.
+- For draft-enabled objects, handle drafts and active instances separately.
 
 ---
+
