@@ -81,6 +81,19 @@ User Sends PATCH (If-Match: ETag)
 - Чи реалізовано `VALIDATE_LOCK` для додаткових перевірок
 - Чи правильно обробляється If-Match на користувацькому UI
 
+### ⚠️ Типові помилки при Concurrency Control
+- Не вказано `@Semantics.systemLastChangedAt` на полі
+- Не включено `lock master;` в Behavior Definition
+- Не реалізовано `LOCK` для Unmanaged RAP
+- Невірна обробка If-Match на UI стороні
+- Невірна побудова SAVE/ROLLBACK логіки
+
+### 🔹 Best Practices for OCC in RAP
+- Завжди додавай `last_changed_at` в Root Entity.
+- Відокривай `lock master; validate_lock;` у всіх Behavior Definition.
+- Реалізуй кастомні `VALIDATE_LOCK`, якщо є сложні бізнес-валідації.
+- Розглядай логіку optimistic та draft handling разом.
+
 ---
 
 ## 📅 Extended Summary: Concurrency Control in SAP RAP (Markdown, 🇬🇧)
@@ -166,5 +179,17 @@ User Sends PATCH (If-Match: ETag)
 - Implement `VALIDATE_LOCK` method for additional consistency checks
 - Ensure If-Match is correctly handled at the client/UI level
 
----
+### ⚠️ Common Mistakes in Concurrency Control
+- Missing `@Semantics.systemLastChangedAt` on field
+- Missing `lock master;` in Behavior Definition
+- No `LOCK` implementation for Unmanaged RAP
+- Incorrect If-Match handling on client/UI
+- Incorrect SAVE/ROLLBACK transaction management
 
+### 🔹 Best Practices for OCC in RAP
+- Always add `last_changed_at` to the Root Entity.
+- Always enable `lock master; validate_lock;` in behavior.
+- Implement custom `VALIDATE_LOCK` for complex validations.
+- Consider combining optimistic locking with draft handling for better user experience.
+
+---
