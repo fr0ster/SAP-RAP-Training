@@ -106,6 +106,29 @@ ENDMETHOD.
 
 ---
 
+# 🧐 When to Use Determinations
+
+| Use Determinations | Avoid Determinations |
+|:-------------------|:---------------------|
+| Deriving calculated or dependent fields | Simple constant values in CDS entities |
+| Data adjustments during modify/save phases | Validations — prefer Validations instead |
+| Field-triggered recalculations | Process control — prefer Actions |
+
+> 📊 [Reference: SAP Help — Determination and Validation Modelling](https://help.sap.com/docs/abap-cloud/abap-rap/determination-and-validation-modelling)
+
+---
+
+# ✅ Best Practices
+
+| Practice | Reason |
+|:---------|:-------|
+| Always trigger Determination via event or field change | Prevent unnecessary executions |
+| Avoid changing trigger fields inside Determination | Prevent recursion/infinite loops |
+| Document which fields trigger Determinations | Easier maintenance |
+| Perform only adjustments, not validations | Maintain proper separation of concerns |
+
+---
+
 # 📅 Typical Usage Scenarios
 
 ## Greenfield
@@ -116,7 +139,7 @@ ENDMETHOD.
 | Auto-assign order date on creation | `order_date = sy-datum` |
 | Set default currency for customer | Based on `customer_id` lookup |
 | Generate a unique ID before save | Generate document number before database persistency |
-| Set audit fields | Update `last_changed_by`, `last_changed_at` in `before save` determination |
+| Set audit fields | Update `last_changed_by`, `last_changed_at` before save |
 
 ## Brownfield
 
@@ -138,13 +161,17 @@ ENDMETHOD.
 
 ---
 
-# 📖 Official Quotes from SAP Documentation
+# 📖 Key Concepts from SAP Documentation
 
-> "Determinations are passive implementations that automatically derive attributes during the transaction lifecycle. They are executed **only when relevant data has been modified**."
-> — [SAP RAP Documentation](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
+The following concepts are summarized based on SAP official documentation. They are **not direct quotes**, but represent key ideas described in the official materials.
 
-> "Use create determinations to set derived attributes upon instance creation; use modify determinations to adapt values based on field changes; use before-save determinations to finalize attributes before database persistency."
-> — [SAP RAP Best Practices](https://help.sap.com/docs/abap-cloud/abap-rap/best-practices-for-determinations)
+- Determinations are passive implementations that automatically derive or adjust attributes during the transactional lifecycle. They are executed only when relevant data has been modified.
+- Create determinations are used to set derived attributes when an instance is created.
+- Modify determinations are used to adapt attributes when certain fields change.
+- Before-save determinations are used to finalize attributes after all transactional changes and validations before database persistency.
+
+> 📊 [Reference: SAP Help — Determinations Overview](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
+> 📊 [Reference: SAP Help — Determination and Validation Modelling](https://help.sap.com/docs/abap-cloud/abap-rap/determination-and-validation-modelling)
 
 ---
 
@@ -161,8 +188,7 @@ ENDMETHOD.
 
 # 📈 Field-Based Determinations
 
-Field-Based Determinations are triggered **only when specific fields are changed**.
-This optimization ensures that unnecessary recalculations or database operations are avoided.
+Field-Based Determinations are triggered **only when specific fields are changed**. This optimization ensures that unnecessary recalculations or database operations are avoided.
 
 ```abap
 define behavior for ZI_SalesOrder
@@ -173,22 +199,18 @@ lock master
 }
 ```
 
-- `on modify field quantity, unit_price` ensures that `update_tax` runs only when `quantity` or `unit_price` are modified.
-- Helps improve performance and transactional efficiency.
-
 > 📊 [Reference: SAP Help — Field-Based Determination](https://help.sap.com/docs/abap-cloud/abap-rap/field-based-determination)
 
 ---
 
-# 📗 References
+# 📚 References
 
 | Topic | Link |
 |:------|:-----|
-| Determinations Overview | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/determinations-overview) |
-| Use Create Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/use-create-determination) |
-| Use Modify Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/use-modify-determination) |
-| Use Before Save Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/use-before-save-determination) |
-| Field-Based Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/field-based-determination) |
-| Implement a Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/implement-a-determination) |
-| Best Practices for Determinations | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/best-practices-for-determinations) |
+| [Determinations Overview](https://help.sap.com/docs/abap-cloud/abap-rap/determinations) |
+| [Developing Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/developing-determinations) |
+| [Defining Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/defining-determinations) |
+| [Implementing Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/implementing-determinations) |
+| [Field-Based Determination](https://help.sap.com/docs/abap-cloud/abap-rap/field-based-determination) |
+| [Determination and Validation Modelling](https://help.sap.com/docs/abap-cloud/abap-rap/determination-and-validation-modelling) |
 
