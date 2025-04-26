@@ -12,7 +12,7 @@
 - [Кращі практики](#-кращі-практики)
 
 ### 💪 Що таке Action в SAP RAP
-**Action** — це явна, нестандартна операція зміни Business Object, що не входить до CRUD (стандартні) операцій.
+**Action** — це явна, нестандартна операція зміни Business Object, що не входить до CRUD (Create, Read, Update, Delete) операцій.
 
 > 📢 Стандартні CRUD операції: Read, Create, Update, Delete, Lock. Всі інші зміни через Actions вважаються нестандартними.
 
@@ -98,8 +98,8 @@ lock master
 ```
 
 ### ✅ Кращі практики
-| Практика | Чому? | Офіційне посилання |
-|:---------|:------|:-------------------|
+| ✅ Практика | 🔍 Чому? | 🔗 Офіційне посилання |
+|:-----------|:--------|:-----------------------|
 | Завжди повертайте `$self` | Щоб UI оновився після зміни об'єкта | [SAP Help: Actions and $self](https://help.sap.com/docs/abap-cloud/abap-rap/actions#define-actions) |
 | Виконуйте бізнес-валідації в `validate_action` | Перевірити дані перед збереженням | [SAP Help: Validations in RAP](https://help.sap.com/docs/abap-cloud/abap-rap/validations) |
 | Не змінюйте ключові поля без потреби | Порушується ідентифікація запису | [SAP Best Practices: Avoid Updating Key Fields](https://help.sap.com/docs/abap-cloud/abap-rap/behavior-definitions#restrictions) |
@@ -141,11 +141,11 @@ An **Action** is an explicit, non-standard operation on a Business Object that i
 ### 👩‍💻 Action Implementation Types
 | Implementation Type | Description |
 |:---------------------|:------------|
-| **Instance Action** | Works with `%key` |
-| **Static Action** | Uses `%cid` |
-| **Action with Parameters** | Accepts `%param` |
-| **Action with Result Type Entity** | Returns newly created entities via `%cid` |
-| **Factory Action** | Creates new instances with `%cid` and `%cid_ref` |
+| **Instance Action** | Works with `%key` for a specific instance |
+| **Static Action** | Uses `%cid`, not tied to a specific instance |
+| **Action with Parameters** | Accepts `%param` structure for input data |
+| **Action with Result Type Entity** | Creates new instances via `%cid` |
+| **Factory Action** | Creates new objects via `%cid` and `%cid_ref` |
 
 ### ✏️ Defining Actions in Behavior Definition
 ```abap
@@ -184,8 +184,8 @@ ENDMETHOD.
 ```
 
 ### 🛠️ Transactional Behavior of Actions
-- Actions are executed within Save Transactions.
-- If an Action changes data, it must return the `result`.
+- Actions are executed within Save transactions.
+- If an Action changes data, it must return `result`.
 - Save Actions are only triggered during the Save Sequence.
 
 ### 📝 Draft-enabled Actions
@@ -216,5 +216,5 @@ lock master
 | Avoid modifying key fields unless necessary | To maintain record identity | [SAP Best Practices: Avoid Updating Key Fields](https://help.sap.com/docs/abap-cloud/abap-rap/behavior-definitions#restrictions) |
 | Use ETag | Prevent concurrent update conflicts | [SAP Help: Managing Concurrency with ETags](https://help.sap.com/docs/abap-cloud/abap-rap/concurrency-control#etag) |
 | Manage transactions properly (ROLLBACK) | Ensure data consistency on errors | [SAP Help: Transactional Behavior](https://help.sap.com/docs/abap-cloud/abap-rap/actions#transactional-aspects) |
-| Separate Draft and Active logic | Avoid saving inconsistencies between drafts and active instances | [SAP Help: Draft Handling](https://help.sap.com/docs/abap-cloud/abap-rap/draft-capability#draft-actions) |
+| Separate Draft and Active logic | Avoid inconsistencies between drafts and active instances | [SAP Help: Draft Handling](https://help.sap.com/docs/abap-cloud/abap-rap/draft-capability#draft-actions) |
 
