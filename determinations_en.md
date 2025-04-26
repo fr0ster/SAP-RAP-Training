@@ -126,6 +126,7 @@ ENDMETHOD.
 | Avoid changing trigger fields inside Determination | Prevent recursion/infinite loops |
 | Document which fields trigger Determinations | Easier maintenance |
 | Perform only adjustments, not validations | Maintain proper separation of concerns |
+> 📊 [Reference: SAP Help — Determination and Validation Modelling](https://help.sap.com/docs/abap-cloud/abap-rap/determination-and-validation-modelling)
 
 ---
 
@@ -199,7 +200,8 @@ lock master
 }
 ```
 
-> 📊 [Reference: SAP Help — Field-Based Determination](https://help.sap.com/docs/abap-cloud/abap-rap/field-based-determination)
+>> 📊 [Reference: SAP Help — Developing Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/implementing-determinations)
+
 
 ---
 
