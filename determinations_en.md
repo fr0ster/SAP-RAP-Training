@@ -10,7 +10,7 @@
 - [Best Practices](#best-practices)
 - [Typical Usage Scenarios](#typical-usage-scenarios)
 - [Common Mistakes When Using Determinations](#common-mistakes-when-using-determinations)
-- [Official Quotes from SAP Documentation](#official-quotes-from-sap-documentation)
+- [Key Concepts from SAP Documentation](#key-concepts-from-sap-documentation)
 - [Quality Checklist for Determinations](#quality-checklist-for-determinations)
 - [Field-Based Determinations](#field-based-determinations)
 - [References](#references)
@@ -28,7 +28,7 @@ They are used to:
 - Populate dependent fields
 - Initialize instance values during creation
 
-> 📊 [Reference: SAP Help — Determinations Overview](https://help.sap.com/docs/abap-cloud/abap-rap/determinations-overview)
+> 📊 [Reference: SAP Help — Determinations Overview](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
 
 ---
 
@@ -38,11 +38,11 @@ They are used to:
 |:-----|:--------|:--------|
 | **On Create** | When a new instance is created | Set `status = 'New'` upon creation |
 | **On Modify** | When specified fields are modified | Recalculate `total_price` if `quantity` or `unit_price` changes |
-| **Before Save** | Before transactional save | Set `finalized_flag` before persisting |
+| **Before Save** | After all transactional changes and validations, before database persistency | Generate unique ID, set audit fields like `last_changed_by`, or trigger a custom event |
 
 > 🖊️ After Modify Determination **does not exist** in RAP.
 
-> 📊 [Reference: SAP Help — Use Create/Modify/Before Save Determination](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
+> 📊 [Reference: SAP Help — Developing Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/developing-determinations)
 
 ---
 
@@ -59,10 +59,7 @@ lock master
 }
 ```
 
-- Specify the trigger: `on create`, `on modify field`, `before save`
-- Optionally bind to specific fields for optimized execution
-
-> 📊 [Reference: SAP Help — Behavior Definitions](https://help.sap.com/docs/abap-cloud/abap-rap/behavior-definitions)
+> 📊 [Reference: SAP Help — Defining Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/defining-determinations)
 
 ---
 
@@ -97,36 +94,15 @@ ENDMETHOD.
 METHOD finalize_status.
   LOOP AT keys INTO DATA(ls_key).
     UPDATE zsalesorder
-      SET finalized_flag = abap_true
+      SET finalized_flag = abap_true,
+          last_changed_by = @sy-uname,
+          last_changed_at = @sy-datum
       WHERE salesorder_id = @ls_key-salesorder_id.
   ENDLOOP.
 ENDMETHOD.
 ```
 
-> 📊 [Reference: SAP Help — Implement a Determination](https://help.sap.com/docs/abap-cloud/abap-rap/implement-a-determination)
-
----
-
-# 🧐 When to Use Determinations
-
-| Use Determinations | Avoid Determinations |
-|:-------------------|:---------------------|
-| Deriving calculated or dependent fields | Simple default values — prefer CDS `@DefaultValue` |
-| Data adjustments during modify/save phases | Validations — use Validations instead |
-| Field-triggered recalculations | Process control (status transitions) — use Actions |
-
-> 📊 [Reference: SAP Help — Best Practices for Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/best-practices-for-determinations)
-
----
-
-# ✅ Best Practices
-
-| ✅ Practice | 🔍 Why? |
-|:------------|:--------|
-| Always trigger Determination via event or field change | Prevent unnecessary executions |
-| Avoid changing trigger fields inside Determination | Prevent recursion/infinite loops |
-| Document clearly which fields trigger Determinations | Easier maintenance |
-| Perform only data adjustment, no validations inside Determinations | Maintain proper separation of concerns |
+> 📊 [Reference: SAP Help — Implementing Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/implementing-determinations)
 
 ---
 
@@ -139,6 +115,8 @@ ENDMETHOD.
 | Populate total_price dynamically | Based on `quantity` and `unit_price` |
 | Auto-assign order date on creation | `order_date = sy-datum` |
 | Set default currency for customer | Based on `customer_id` lookup |
+| Generate a unique ID before save | Generate document number before database persistency |
+| Set audit fields | Update `last_changed_by`, `last_changed_at` in `before save` determination |
 
 ## Brownfield
 
@@ -146,6 +124,7 @@ ENDMETHOD.
 |:---------|:--------|
 | Recalculate legacy field values | Net Amount = Gross Amount - Discount |
 | Standardize old data formats before save | Date conversion from YYMMDD to YYYYMMDD |
+| Trigger custom event before persistency | Publish event before database commit |
 
 ---
 
@@ -153,7 +132,7 @@ ENDMETHOD.
 
 | Mistake | Explanation |
 |:--------|:------------|
-| Using Determination for static default values | Should be handled at CDS layer with `@DefaultValue` |
+| Using Determination for static default values | Should be handled using constant values in CDS entities |
 | Causing recursive triggers | Changing trigger field inside Determination |
 | Mixing validations inside Determinations | Should be separated into Validations |
 
