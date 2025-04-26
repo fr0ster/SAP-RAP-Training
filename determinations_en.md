@@ -1,60 +1,52 @@
-# 🗕️ Extended Outline: Determinations in SAP RAP (Markdown, 🇬🇧)
+# 📅 Extended Outline: Determinations in SAP RAP (Markdown, 🇬🇧)
 
 ## Table of Contents (TOC)
 
-- [What is a Determination in RAP?](#-what-is-a-determination-in-sap-rap)
-- [Types of Determinations](#-types-of-determinations)
-- [Types of Determination Implementations](#-types-of-determination-implementations)
-- [Declaring Determinations in Behavior Definition](#-declaring-determinations-in-behavior-definition)
-- [Implementing Determinations in Behavior Implementation](#-implementing-determinations-in-behavior-implementation)
-- [When to Use (and Not Use) Determinations](#-when-to-use-and-not-use-determinations)
-- [Best Practices](#-best-practices)
-- [Typical Usage Scenarios](#-typical-usage-scenarios)
-- [Common Mistakes When Using Determinations](#-common-mistakes-when-using-determinations)
+- [What is a Determination in RAP?](#what-is-a-determination-in-rap)
+- [Types of Determinations](#types-of-determinations)
+- [Declaring Determinations in Behavior Definition](#declaring-determinations-in-behavior-definition)
+- [Implementing Determinations in Behavior Implementation](#implementing-determinations-in-behavior-implementation)
+- [When to Use Determinations](#when-to-use-determinations)
+- [Best Practices](#best-practices)
+- [Typical Usage Scenarios](#typical-usage-scenarios)
+- [Common Mistakes When Using Determinations](#common-mistakes-when-using-determinations)
+- [Official Quotes from SAP Documentation](#official-quotes-from-sap-documentation)
+- [Quality Checklist for Determinations](#quality-checklist-for-determinations)
+- [Field-Based Determinations](#field-based-determinations)
+- [References](#references)
 
 ---
 
-### 💪 What is a Determination in SAP RAP
+# 💪 What is a Determination in RAP
 
-A **Determination** is an automatic piece of business logic executed during an object's lifecycle without direct user invocation.  
-[SAP Help](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
+A **Determination** in SAP RAP is a passive, automatically invoked implementation that adjusts or derives attributes during an object's transactional lifecycle (such as creation, field changes, or before save), without explicit user invocation.
 
-It is used for:
-- Populating dependent fields;
-- Initializing values when creating an object;
-- Performing calculations based on other fields.
+> 🖊️ Determinations are triggered **only when data is modified**.
 
-> 📢 Determinations are *passive* handlers that automatically react to changes.
+They are used to:
+- Derive calculated attributes
+- Populate dependent fields
+- Initialize instance values during creation
 
----
-
-### 🔢 Types of Determinations
-
-| Type | Description | Example |
-|:-----|:------------|:--------|
-| **Create** | Triggered when an object is created. | Setting a default `currency_code`. |
-| **Update** | Triggered on field changes. | Recalculating `total_amount` when `quantity` or `price` changes. |
-| **Before Save** | Triggered before persisting to the database. | Setting `finalized_flag` before commit. |
-| **After Modify** | Triggered after in-memory changes. | Logging changes for analytics. |
-
-> 📚 [SAP Help: Determination Types](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
+> 📊 [Reference: SAP Help — Determinations Overview](https://help.sap.com/docs/abap-cloud/abap-rap/determinations-overview)
 
 ---
 
-### 👩‍💻 Types of Determination Implementations
+# 🔢 Types of Determinations
 
-| Implementation Type | Description | Example |
-|:---------------------|:------------|:--------|
-| **Instance Determination** | Applies to specific instances (%key). | Recalculating order value. |
-| **Static Determination** | Applies globally without instance context (rare). | Generating unique document numbers. |
-| **Field-triggered Determination** | Triggered by changes to specific fields. | Recalculating taxes when amount changes. |
-| **Lifecycle-triggered Determination** | Triggered at lifecycle phases. | Initializing status upon creation. |
+| Type | Trigger | Example |
+|:-----|:--------|:--------|
+| **On Create** | When a new instance is created | Set `status = 'New'` upon creation |
+| **On Modify** | When specified fields are modified | Recalculate `total_price` if `quantity` or `unit_price` changes |
+| **Before Save** | Before transactional save | Set `finalized_flag` before persisting |
 
-> 📚 [SAP Help: Determination Implementation](https://help.sap.com/docs/abap-cloud/abap-rap/implement-determinations)
+> 🖊️ After Modify Determination **does not exist** in RAP.
+
+> 📊 [Reference: SAP Help — Use Create/Modify/Before Save Determination](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
 
 ---
 
-### ✏️ Declaring Determinations in Behavior Definition
+# ✏️ Declaring Determinations in Behavior Definition
 
 ```abap
 define behavior for ZI_SalesOrder
@@ -62,39 +54,43 @@ persistent table ZSalesOrder
 lock master
 {
   determination set_default_values on create;
-  determination recalculate_total on modify field quantity, price;
+  determination recalculate_total on modify field quantity, unit_price;
   determination finalize_status before save;
 }
 ```
 
-> 📚 [SAP Help: Behavior Definitions](https://help.sap.com/docs/abap-cloud/abap-rap/behavior-definitions)
+- Specify the trigger: `on create`, `on modify field`, `before save`
+- Optionally bind to specific fields for optimized execution
+
+> 📊 [Reference: SAP Help — Behavior Definitions](https://help.sap.com/docs/abap-cloud/abap-rap/behavior-definitions)
 
 ---
 
-### 🛠️ Implementing Determinations in Behavior Implementation
+# 🛠️ Implementing Determinations in Behavior Implementation
 
 ```abap
 METHOD set_default_values.
   LOOP AT keys INTO DATA(ls_key).
     UPDATE zsalesorder
-      SET status = 'DRAFT',
-          currency_code = 'USD'
+      SET currency_code = 'USD',
+          order_date = @sy-datum
       WHERE salesorder_id = @ls_key-salesorder_id.
   ENDLOOP.
 ENDMETHOD.
 
 METHOD recalculate_total.
   LOOP AT keys INTO DATA(ls_key).
-    SELECT SINGLE quantity, price
+    SELECT SINGLE quantity, unit_price
       INTO @DATA(ls_order)
       FROM zsalesorder
       WHERE salesorder_id = @ls_key-salesorder_id.
 
-    DATA(lv_total) = ls_order-quantity * ls_order-price.
-
-    UPDATE zsalesorder
-      SET total_amount = @lv_total
-      WHERE salesorder_id = @ls_key-salesorder_id.
+    IF ls_order-quantity IS NOT INITIAL AND ls_order-unit_price IS NOT INITIAL.
+      DATA(lv_total) = ls_order-quantity * ls_order-unit_price.
+      UPDATE zsalesorder
+        SET total_price = @lv_total
+        WHERE salesorder_id = @ls_key-salesorder_id.
+    ENDIF.
   ENDLOOP.
 ENDMETHOD.
 
@@ -107,54 +103,49 @@ METHOD finalize_status.
 ENDMETHOD.
 ```
 
-> 📚 [SAP Help: Behavior Implementations](https://help.sap.com/docs/abap-cloud/abap-rap/implement-determinations)
+> 📊 [Reference: SAP Help — Implement a Determination](https://help.sap.com/docs/abap-cloud/abap-rap/implement-a-determination)
 
 ---
 
-### 🧐 When to Use (and Not Use) Determinations
+# 🧐 When to Use Determinations
 
 | Use Determinations | Avoid Determinations |
 |:-------------------|:---------------------|
-| Populating calculated or dependent fields | Setting simple default values (use CDS Default instead) |
-| Recalculating dependent values | Status transitions — prefer Actions |
-| Data initialization during creation | Data validations — prefer Validations |
-| Adapting legacy (brownfield) logic | Direct process control — prefer Actions |
+| Deriving calculated or dependent fields | Simple default values — prefer CDS `@DefaultValue` |
+| Data adjustments during modify/save phases | Validations — use Validations instead |
+| Field-triggered recalculations | Process control (status transitions) — use Actions |
 
-> 📚 [SAP Best Practices: RAP Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
+> 📊 [Reference: SAP Help — Best Practices for Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/best-practices-for-determinations)
 
 ---
 
-### ✅ Best Practices
+# ✅ Best Practices
 
 | ✅ Practice | 🔍 Why? |
 |:------------|:--------|
-| Use for complex calculations, not simple defaults | Code maintainability |
-| Bind to specific fields | Performance optimization |
-| Avoid chaining determinations | Prevent infinite loops |
-| Ensure transactional consistency | Data integrity control |
-| Document Field Triggers clearly | Easier maintenance |
+| Always trigger Determination via event or field change | Prevent unnecessary executions |
+| Avoid changing trigger fields inside Determination | Prevent recursion/infinite loops |
+| Document clearly which fields trigger Determinations | Easier maintenance |
+| Perform only data adjustment, no validations inside Determinations | Maintain proper separation of concerns |
 
 ---
 
-# 🛠️ Typical Usage Scenarios
+# 📅 Typical Usage Scenarios
 
-## ✅ Greenfield Scenarios
+## Greenfield
 
-| Scenario | Example | Note |
-|:---------|:--------|:-----|
-| Calculate total based on quantity and price | After changing `quantity` or `price`, recalculate `total_amount`. | [SAP Help: Field Control and Determinations](https://help.sap.com/docs/abap-cloud/abap-rap/field-control) |
-| Dynamically set currency based on customer country | After changing `customer_id`, retrieve and set `currency_code`. | Via `on modify field customer_id`. |
-| Automatically set order date upon creation | Set `order_date = sy-datum` when creating a record. | Via `on create` determination. |
+| Scenario | Example |
+|:---------|:--------|
+| Populate total_price dynamically | Based on `quantity` and `unit_price` |
+| Auto-assign order date on creation | `order_date = sy-datum` |
+| Set default currency for customer | Based on `customer_id` lookup |
 
-> ❗ Status `Draft` is handled automatically by the framework — no need for explicit Determinations.
+## Brownfield
 
-## ✅ Brownfield Scenarios
-
-| Scenario | Example | Note |
-|:---------|:--------|:-----|
-| Recalculating dependent fields in legacy tables | Automatically update `net_amount` after `gross_amount` changes. | |
-| Fetching values from lookup tables | Auto-fill product description when `product_id` is modified. | |
-| Formatting data during save | Converting old date format YYMMDD to standard YYYYMMDD during save. | |
+| Scenario | Example |
+|:---------|:--------|
+| Recalculate legacy field values | Net Amount = Gross Amount - Discount |
+| Standardize old data formats before save | Date conversion from YYMMDD to YYYYMMDD |
 
 ---
 
@@ -162,74 +153,63 @@ ENDMETHOD.
 
 | Mistake | Explanation |
 |:--------|:------------|
-| Using Determinations for simple defaults | Better handled using `@DefaultValue`. |
-| Causing infinite loops through field changes | Avoid changing trigger fields within Determination. |
-| Overloading with validations inside Determinations | Should be separated into Validations. |
-| Lack of documentation for field triggers | Makes maintenance difficult. |
+| Using Determination for static default values | Should be handled at CDS layer with `@DefaultValue` |
+| Causing recursive triggers | Changing trigger field inside Determination |
+| Mixing validations inside Determinations | Should be separated into Validations |
 
 ---
 
-# ⚡ Examples of Incorrect Determination Usage
+# 📖 Official Quotes from SAP Documentation
 
-## ❌ Example: Improper Default Setting
-
-```abap
-METHOD set_default_country.
-  LOOP AT keys INTO DATA(ls_key).
-    UPDATE zsalesorder
-      SET country = 'UA'
-      WHERE salesorder_id = @ls_key-salesorder_id.
-  ENDLOOP.
-ENDMETHOD.
-```
-> ❗ Better handled using a CDS annotation `@DefaultValue: 'UA'`.
-
----
-
-# 📖 Extracts from Official SAP Documentation
-
-> "Determinations should automatically derive or adjust attributes during a transactional lifecycle without explicit user interaction."  
+> "Determinations are passive implementations that automatically derive attributes during the transaction lifecycle. They are executed **only when relevant data has been modified**."
 > — [SAP RAP Documentation](https://help.sap.com/docs/abap-cloud/abap-rap/determinations)
 
-> "Default values should primarily be defined in the CDS model where possible to avoid redundant coding."  
-> — [SAP RAP Best Practices](https://help.sap.com/docs/abap-cloud/abap-rap/best-practices)
-
-> "Use create determinations for setting derived attributes at instance creation time; use modify or before-save determinations for derived values that depend on changes made during the transaction."  
-> — [SAP RAP Best Practices](https://help.sap.com/docs/abap-cloud/abap-rap/best-practices)
+> "Use create determinations to set derived attributes upon instance creation; use modify determinations to adapt values based on field changes; use before-save determinations to finalize attributes before database persistency."
+> — [SAP RAP Best Practices](https://help.sap.com/docs/abap-cloud/abap-rap/best-practices-for-determinations)
 
 ---
 
-# ✅ Determination Quality Checklist
+# ✅ Quality Checklist for Determinations
 
 | Question | Note |
 |:---------|:-----|
-| Is it bound to events or field changes? | Should be `on create`, `on modify field ...`. |
-| Does it avoid changing its own trigger fields? | To prevent cycles. |
-| Is it calculating complex dependencies, not just simple defaults? | Simple defaults should be handled in CDS. |
-| Are field triggers documented? | For transparency and maintenance. |
+| Is the Determination event-triggered? | Should be linked to create, modify, or before-save |
+| Are field triggers documented and isolated? | Transparent and easy to maintain |
+| Is only derived/calculated logic included? | No validation or status changes |
+| Is transactional consistency ensured? | Mandatory for successful save |
 
 ---
 
-# ✨ Good Examples of Determination Implementations
+# 📈 Field-Based Determinations
 
-## ✅ Example: Proper Total Amount Recalculation
+Field-Based Determinations are triggered **only when specific fields are changed**.
+This optimization ensures that unnecessary recalculations or database operations are avoided.
 
 ```abap
-METHOD recalculate_total_amount.
-  LOOP AT keys INTO DATA(ls_key).
-    SELECT SINGLE quantity, price
-      INTO @DATA(ls_order)
-      FROM zsalesorder
-      WHERE salesorder_id = @ls_key-salesorder_id.
-
-    IF ls_order-quantity IS NOT INITIAL AND ls_order-price IS NOT INITIAL.
-      DATA(lv_total) = ls_order-quantity * ls_order-price.
-      UPDATE zsalesorder
-        SET total_amount = @lv_total
-        WHERE salesorder_id = @ls_key-salesorder_id.
-    ENDIF.
-  ENDLOOP.
-ENDMETHOD.
+define behavior for ZI_SalesOrder
+persistent table ZSalesOrder
+lock master
+{
+  determination update_tax on modify field quantity, unit_price;
+}
 ```
-> ✔️ Good practice: only calculations, no changes to triggering fields.
+
+- `on modify field quantity, unit_price` ensures that `update_tax` runs only when `quantity` or `unit_price` are modified.
+- Helps improve performance and transactional efficiency.
+
+> 📊 [Reference: SAP Help — Field-Based Determination](https://help.sap.com/docs/abap-cloud/abap-rap/field-based-determination)
+
+---
+
+# 📗 References
+
+| Topic | Link |
+|:------|:-----|
+| Determinations Overview | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/determinations-overview) |
+| Use Create Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/use-create-determination) |
+| Use Modify Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/use-modify-determination) |
+| Use Before Save Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/use-before-save-determination) |
+| Field-Based Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/field-based-determination) |
+| Implement a Determination | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/implement-a-determination) |
+| Best Practices for Determinations | [Link](https://help.sap.com/docs/abap-cloud/abap-rap/best-practices-for-determinations) |
 
