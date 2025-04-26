@@ -98,12 +98,14 @@ lock master
 ```
 
 ### ✅ Кращі практики
-- Завжди повертайте `$self` при зміні об'єкта для оновлення UI.
-- Виконуйте бізнес-валідації в `validate_action` перед змінами.
-- Уникайте змін ключових полів (`key fields`, `created_by`, `created_at`) без потреби.
-- Використовуйте ETag для уникнення конфліктів паралельного оновлення.
-- Правильно керуйте транзакціями (`ROLLBACK`) для цілісності даних.
-- Чітко розділяйте логіку для чернеткових і активних інстанцій.
+| Практика | Чому? | Офіційне посилання |
+|:---------|:------|:-------------------|
+| Завжди повертайте `$self` | Щоб UI оновився після зміни об'єкта | [SAP Help: Actions and $self](https://help.sap.com/docs/abap-cloud/abap-rap/actions#define-actions) |
+| Виконуйте бізнес-валідації в `validate_action` | Перевірити дані перед збереженням | [SAP Help: Validations in RAP](https://help.sap.com/docs/abap-cloud/abap-rap/validations) |
+| Не змінюйте ключові поля без потреби | Порушується ідентифікація запису | [SAP Best Practices: Avoid Updating Key Fields](https://help.sap.com/docs/abap-cloud/abap-rap/behavior-definitions#restrictions) |
+| Використовуйте ETag | Захист від конфліктів паралельного оновлення | [SAP Help: Managing Concurrency with ETags](https://help.sap.com/docs/abap-cloud/abap-rap/concurrency-control#etag) |
+| Керуйте транзакціями правильно (ROLLBACK) | Забезпечення цілісності даних при помилках | [SAP Help: Transactional Behavior](https://help.sap.com/docs/abap-cloud/abap-rap/actions#transactional-aspects) |
+| Розділяйте логіку Draft і Active | Інакше можливі помилки у статусах і збереженні | [SAP Help: Draft Handling](https://help.sap.com/docs/abap-cloud/abap-rap/draft-capability#draft-actions) |
 
 ---
 
@@ -183,8 +185,8 @@ ENDMETHOD.
 
 ### 🛠️ Transactional Behavior of Actions
 - Actions are executed within Save Transactions.
-- If an Action modifies data, it must return `result`.
-- Save Actions are only triggered during Save Sequence.
+- If an Action changes data, it must return the `result`.
+- Save Actions are only triggered during the Save Sequence.
 
 ### 📝 Draft-enabled Actions
 ```abap
@@ -207,10 +209,12 @@ lock master
 ```
 
 ### ✅ Best Practices
-- Always return `$self` when updating the object to ensure correct UI update.
-- Perform business validations in `validate_action` before changing the object state.
-- Avoid modifying key fields (`key fields`, `created_by`, `created_at`) unless necessary.
-- Use ETag to prevent parallel update conflicts.
-- Manage transactions properly (`ROLLBACK`) to ensure data consistency.
-- Separate handling of Draft and Active instances clearly.
+| ✅ Practice | 🔍 Why? | 🔗 Official Reference |
+|:-----------|:-------|:----------------------|
+| Always return `$self` | To refresh UI after object modification | [SAP Help: Actions and $self](https://help.sap.com/docs/abap-cloud/abap-rap/actions#define-actions) |
+| Perform validations in `validate_action` | Check business rules before saving | [SAP Help: Validations in RAP](https://help.sap.com/docs/abap-cloud/abap-rap/validations) |
+| Avoid modifying key fields unless necessary | To maintain record identity | [SAP Best Practices: Avoid Updating Key Fields](https://help.sap.com/docs/abap-cloud/abap-rap/behavior-definitions#restrictions) |
+| Use ETag | Prevent concurrent update conflicts | [SAP Help: Managing Concurrency with ETags](https://help.sap.com/docs/abap-cloud/abap-rap/concurrency-control#etag) |
+| Manage transactions properly (ROLLBACK) | Ensure data consistency on errors | [SAP Help: Transactional Behavior](https://help.sap.com/docs/abap-cloud/abap-rap/actions#transactional-aspects) |
+| Separate Draft and Active logic | Avoid saving inconsistencies between drafts and active instances | [SAP Help: Draft Handling](https://help.sap.com/docs/abap-cloud/abap-rap/draft-capability#draft-actions) |
 
