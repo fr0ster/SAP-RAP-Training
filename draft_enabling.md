@@ -23,6 +23,7 @@ Draft handling is a built-in mechanism of the **ABAP RESTful Application Program
 
 This mechanism enhances user experience by providing **autosave**, **multi-step editing**, and **error recovery** capabilities.
 
+[Learn more](https://help.sap.com/docs/abap-cloud/abap-rap/draft-handling-in-rap)
 
 ## 📅 Purpose and Benefits of Draft Handling
 
@@ -43,6 +44,8 @@ When draft handling is enabled for a RAP business object:
 
 
 ## 🔢 Step-by-Step: Enabling Draft Handling
+
+[Detailed guide](https://help.sap.com/docs/abap-cloud/abap-rap/enabling-draft-handling-in-rap)
 
 ### Step 1: Define Draft Table
 - Create a database table for draft instances.
@@ -123,6 +126,8 @@ with draft
 
 ## 🔍 Etag and Total Etag Concepts
 
+[More about ETags](https://help.sap.com/docs/abap-cloud/abap-rap/handling-etags-in-rap)
+
 ### Etag
 - The **etag** represents a fingerprint of a **single entity**'s current state.
 - It changes whenever the entity instance is updated (either draft or active).
@@ -161,6 +166,8 @@ When defining behavior for a draft-enabled entity:
 
 ## 🔧 Draft Administrative Data
 
+[Detailed view](https://help.sap.com/docs/abap-cloud/abap-rap/draft-administrative-data-in-rap)
+
 Drafts are associated with **DraftAdministrativeData**, containing:
 - **Draft UUID**: Unique draft identifier
 - **Last Changed By**: User ID
@@ -192,10 +199,10 @@ These fields allow safe collaboration and consistency checks.
 
 ## 🔗 References
 
-- [SAP Help Portal — Enabling Draft Handling](https://help.sap.com/docs/abap-cloud/abap-rap/abap-restful-application-programming-model/draft-handling-in-rap)
-- [SAP Help Portal — Draft Administrative Data](https://help.sap.com/docs/abap-cloud/abap-rap/abap-restful-application-programming-model/draft-administrative-data)
-- [SAP Help Portal — Etags and Total Etags](https://help.sap.com/docs/abap-cloud/abap-rap/abap-restful-application-programming-model/etag-handling)
+- [SAP Help Portal — Draft Handling Overview](https://help.sap.com/docs/abap-cloud/abap-rap/draft-handling-in-rap)
+- [SAP Help Portal — Enabling Draft Handling (Step-by-Step)](https://help.sap.com/docs/abap-cloud/abap-rap/enabling-draft-handling-in-rap)
+- [SAP Help Portal — Draft Administrative Data](https://help.sap.com/docs/abap-cloud/abap-rap/draft-administrative-data-in-rap)
+- [SAP Help Portal — Handling ETags and Total ETags](https://help.sap.com/docs/abap-cloud/abap-rap/handling-etags-in-rap)
 - [Simplest SAP RAP Example - Draft Notes](https://github.com/fr0ster/simplest_sap_rap_example/blob/master/7th_iteration/notes.md)
 
 ---
-
