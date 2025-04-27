@@ -39,16 +39,16 @@ It allows fine-grained control over instance behavior at runtime without modifyi
 
 ## 🌐 Feature Control at Design-Time vs Runtime
 
-| Aspect | Design-Time | Runtime |
-|:---|:---|:---|
-| **Definition** | Declaring capabilities in Behavior Definition | Dynamically controlling features per instance |
-| **Focus** | Structural possibilities | Conditional availability |
-| **Example** | Defining an Action "Cancel" | Disabling "Cancel" if Order is already Completed |
+| Aspect         | Design-Time                                   | Runtime                                          |
+| -------------- | --------------------------------------------- | ------------------------------------------------ |
+| **Definition** | Declaring capabilities in Behavior Definition | Dynamically controlling features per instance    |
+| **Focus**      | Structural possibilities                      | Conditional availability                         |
+| **Example**    | Defining an Action "Cancel"                   | Disabling "Cancel" if Order is already Completed |
 
-> Design-time: "Can this feature ever exist?"  
+> Design-time: "Can this feature ever exist?"\
 > Runtime: "Is this feature currently available?"
 
-[🔗 Related: SAP Tutorials — ABAP RAP Fundamentals](https://developers.sap.com/group.abap-env-restful-application-programming.html)
+[🔗 Related: Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)
 
 ---
 
@@ -57,16 +57,23 @@ It allows fine-grained control over instance behavior at runtime without modifyi
 You declare feature controls in the **behavior definition** (`.behavior` files).
 
 ```abap
-define behavior for ZI_SalesOrder
-persistent table ZSalesOrder
-lock master
+define behavior for /DMO/R_Travel_D alias Travel
 {
-  action cancel_order result [1] $self;  
-  feature-control feature_control for cancel_order;
+  association _Booking { create ( features : instance ); }
+
+  field ( numbering : managed, readonly ) TravelUUID;
+  field ( readonly ) TravelID, OverallStatus, TotalPrice, LocalCreatedAt, LocalCreatedBy, LocalLastChangedAt, LocalLastChangedBy, LastChangedAt;
+  field ( mandatory ) CustomerID, AgencyID, BeginDate, EndDate, CurrencyCode;
+  field ( features : instance ) BookingFee;
+
+  action ( features : instance ) acceptTravel result [1] $self;
+  action ( features : instance ) rejectTravel result [1] $self;
+  action ( features : instance ) deductDiscount parameter /DMO/A_TRAVEL_DISCOUNT result [1] $self;
 }
 ```
 
 **Notes:**
+
 - The `feature-control` keyword links a feature (like an action) to runtime control logic.
 - You can define feature control for actions, fields, and other operations.
 
@@ -78,29 +85,44 @@ lock master
 
 You implement feature control logic inside the **behavior implementation class**.
 
-```abap
-METHODS feature_control FOR FEATURE CONTROL
-  IMPORTING keys REQUEST requested_features
-  RESULT result_features.
-```
-
 ### Example Implementation
 
 ```abap
-METHOD feature_control.
-  LOOP AT keys INTO DATA(ls_key).
-    READ ENTITY zi_salesorder ENTITY salesorder_id = @ls_key-salesorder_id FIELDS ( status ) RESULT DATA(ls_data).
+METHOD get_instance_features.
 
-    IF ls_data-status = 'COMPLETED'.
-      result_features-cancel_order = if_abap_behv=>fc_disabled.
-    ELSE.
-      result_features-cancel_order = if_abap_behv=>fc_enabled.
-    ENDIF.
-  ENDLOOP.
+  READ ENTITIES OF /DMO/R_Travel_D IN LOCAL MODE
+    ENTITY Travel
+      FIELDS ( OverallStatus )
+      WITH CORRESPONDING #( keys )
+    RESULT DATA(travels)
+    FAILED failed.
+
+  result = VALUE #( FOR ls_travel IN travels
+                      ( %tky                   = ls_travel-%tky
+
+                        %field-BookingFee      = COND #( WHEN ls_travel-OverallStatus = travel_status-accepted
+                                                         THEN if_abap_behv=>fc-f-read_only
+                                                         ELSE if_abap_behv=>fc-f-unrestricted )
+                        %action-acceptTravel   = COND #( WHEN ls_travel-OverallStatus = travel_status-accepted
+                                                         THEN if_abap_behv=>fc-o-disabled
+                                                         ELSE if_abap_behv=>fc-o-enabled )
+                        %action-rejectTravel   = COND #( WHEN ls_travel-OverallStatus = travel_status-rejected
+                                                         THEN if_abap_behv=>fc-o-disabled
+                                                         ELSE if_abap_behv=>fc-o-enabled )
+                        %action-deductDiscount = COND #( WHEN ls_travel-OverallStatus = travel_status-accepted
+                                                         THEN if_abap_behv=>fc-o-disabled
+                                                         ELSE if_abap_behv=>fc-o-enabled )
+                        %assoc-_Booking        = COND #( WHEN ls_travel-OverallStatus = travel_status-rejected
+                                                        THEN if_abap_behv=>fc-o-disabled
+                                                        ELSE if_abap_behv=>fc-o-enabled )
+                      ) ).
+
 ENDMETHOD.
+
 ```
 
 **Key Points:**
+
 - **requested_features** tells which features to check.
 - **result_features** indicates which features are enabled or disabled.
 - Constants like `IF_ABAP_BEHV=>FC_ENABLED` and `IF_ABAP_BEHV=>FC_DISABLED` are used.
@@ -111,15 +133,13 @@ ENDMETHOD.
 
 ## 🔄 Best Practices for Feature Control
 
-| Practice | Reason |
-|:---|:---|
-| Keep logic simple | Avoid complex dependencies that are hard to debug |
-| Minimize DB access | Preload necessary fields if possible |
-| Clearly document controlled features | Easy maintenance and debugging |
-| Separate feature checks from validations | Avoid confusion of purposes |
-| Always return consistent results | Unclear states can cause frontend errors |
-
-[🧠 Tips: SAP Community Blog — Feature Control in RAP](https://community.sap.com/topics/abap/feature-control-rap-best-practices)
+| Practice                                 | Reason                                            |
+| ---------------------------------------- | ------------------------------------------------- |
+| Keep logic simple                        | Avoid complex dependencies that are hard to debug |
+| Minimize DB access                       | Preload necessary fields if possible              |
+| Clearly document controlled features     | Easy maintenance and debugging                    |
+| Separate feature checks from validations | Avoid confusion of purposes                       |
+| Always return consistent results         | Unclear states can cause frontend errors          |
 
 ---
 
@@ -142,28 +162,19 @@ ENDMETHOD.
 - **Mixing validation and feature control responsibilities**.
 - **Failing to cover edge cases**, e.g., status transitions.
 
-[🚫 Common Pitfalls: SAP Community Discussion](https://community.sap.com/topics/abap/feature-control-rap-best-practices)
-
 ---
 
 ## 🔗 References
 
-- [Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)  
-  _Describes how to define and implement feature control for actions, fields, and operations in RAP._
-- [Feature Control Overview | SAP Help Portal](https://help.sap.com/docs/btp/sap-business-application-studio/feature-control)  
-  _General overview of feature control especially for SAP Fiori UI contexts._
-- [RAP - Feature Control - ABAP Keyword Documentation](https://help.sap.com/doc/abapdocu_latest_index_htm/latest/en-US/index.htm?file=abaprap_feature_control.htm)  
-  _Technical ABAP keyword documentation explaining Feature Control syntax and usage in RAP._
-- [SAP Tutorials: ABAP RESTful Application Programming Model](https://developers.sap.com/group.abap-env-restful-application-programming.html)  
-  _Step-by-step guided tutorials including exercises with Feature Control._
-- [SAP Community Blog — Feature Control in RAP: Best Practices](https://community.sap.com/topics/abap/feature-control-rap-best-practices)  
-  _Community blog article explaining practical scenarios and common pitfalls._
-- [SAP Press — ABAP RAP Book (Chapter on Feature Control)](https://www.sap-press.com/abap-restful-application-programming-model_5085/)  
-  _In-depth explanation in the official SAP Press book._
+- [Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)\
+  *Describes how to define and implement feature control for actions, fields, and operations in RAP.*
+- [Feature Control Overview | SAP Help Portal](https://help.sap.com/docs/btp/sap-business-application-studio/feature-control)\
+  *General overview of feature control especially for SAP Fiori UI contexts.*
+- [RAP - Feature Control - ABAP Keyword Documentation](https://help.sap.com/doc/abapdocu_latest_index_htm/latest/en-US/index.htm?file=abaprap_feature_control.htm)\
+  *Technical ABAP keyword documentation explaining Feature Control syntax and usage in RAP.*
+- [SAP Tutorials: ABAP RESTful Application Programming Model](https://developers.sap.com/group.abap-env-restful-application-programming.html)\
+  *Step-by-step guided tutorials including exercises with Feature Control.*
+- [SAP Press — ABAP RAP Book (Chapter on Feature Control)](https://www.sap-press.com/abap-restful-application-programming-model_5085/)\
+  *In-depth explanation in the official SAP Press book.*
 
 ---
-
-> Next: [Extended Notes: Validation vs Determination](#)
-
----
-
