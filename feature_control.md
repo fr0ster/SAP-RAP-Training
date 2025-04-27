@@ -54,7 +54,7 @@ It allows fine-grained control over instance behavior at runtime without modifyi
 
 ## 🔧 Defining Feature Control in Behavior Definition
 
-You declare feature controls in the **behavior definition** (`.behavior` files).
+You declare instance features directly within the **behavior definition** (`.behavior` files).
 
 ```abap
 define behavior for /DMO/R_Travel_D alias Travel
@@ -74,8 +74,8 @@ define behavior for /DMO/R_Travel_D alias Travel
 
 **Notes:**
 
-- The `feature-control` keyword links a feature (like an action) to runtime control logic.
-- You can define feature control for actions, fields, and other operations.
+- The `( features : instance )` addition marks fields, actions, and associations as dynamically controlled.
+- The concrete state (enabled/disabled/read-only) is determined at runtime.
 
 [📑 Official Guide: Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)
 
@@ -83,7 +83,14 @@ define behavior for /DMO/R_Travel_D alias Travel
 
 ## 👩‍💼 Implementing Feature Control in Behavior Implementation
 
-You implement feature control logic inside the **behavior implementation class**.
+You implement feature control logic inside the **behavior implementation class**, using the `GET INSTANCE FEATURES` method.
+
+```abap
+METHODS get_instance_features
+  IMPORTING keys REQUEST requested_features
+  RESULT result_features
+  FAILED failed.
+```
 
 ### Example Implementation
 
@@ -98,7 +105,7 @@ METHOD get_instance_features.
     FAILED failed.
 
   result = VALUE #( FOR ls_travel IN travels
-                      ( %tky                   = ls_travel-%tky
+                      ( %tky = ls_travel-%tky
 
                         %field-BookingFee      = COND #( WHEN ls_travel-OverallStatus = travel_status-accepted
                                                          THEN if_abap_behv=>fc-f-read_only
@@ -113,19 +120,18 @@ METHOD get_instance_features.
                                                          THEN if_abap_behv=>fc-o-disabled
                                                          ELSE if_abap_behv=>fc-o-enabled )
                         %assoc-_Booking        = COND #( WHEN ls_travel-OverallStatus = travel_status-rejected
-                                                        THEN if_abap_behv=>fc-o-disabled
-                                                        ELSE if_abap_behv=>fc-o-enabled )
+                                                         THEN if_abap_behv=>fc-o-disabled
+                                                         ELSE if_abap_behv=>fc-o-enabled )
                       ) ).
 
 ENDMETHOD.
-
 ```
 
 **Key Points:**
 
-- **requested_features** tells which features to check.
-- **result_features** indicates which features are enabled or disabled.
-- Constants like `IF_ABAP_BEHV=>FC_ENABLED` and `IF_ABAP_BEHV=>FC_DISABLED` are used.
+- **requested_features** contains the keys and required feature types.
+- **result_features** specifies the state for fields, actions, and associations.
+- Constants like `IF_ABAP_BEHV=>FC-F-READ_ONLY`, `FC-F-UNRESTRICTED`, `FC-O-ENABLED`, and `FC-O-DISABLED` are used.
 
 [🛠️ Deep Dive: Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)
 
