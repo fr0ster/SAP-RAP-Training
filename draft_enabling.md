@@ -14,6 +14,7 @@
 - [Important Considerations](#-important-considerations)
 - [Best Practices](#-best-practices)
 - [Practical Insights from Minimal RAP Example](#-practical-insights-from-minimal-rap-example)
+- [Summary](#-summary)
 - [References](#-references)
 
 ---
@@ -24,14 +25,12 @@ Draft handling is a built-in mechanism of the **ABAP RESTful Application Program
 
 This mechanism enhances user experience by providing **autosave**, **multi-step editing**, and **error recovery** capabilities.
 
-
 ## 📅 Purpose and Benefits of Draft Handling
 
 - Allow users to work on incomplete data without affecting active records.
 - Support autosave functionality.
 - Enable error recovery: users can return later to complete unfinished tasks.
 - Enable collaborative editing: different users can view the draft state.
-
 
 ## ⚖️ How Draft Handling Works
 
@@ -41,7 +40,6 @@ When draft handling is enabled for a RAP business object:
 - Upon "activation" (save/submit), the draft is merged into the active version.
 - **Draft Administrative Data** tracks draft metadata like last modified timestamp and user.
 - Locking mechanisms ensure that only one user edits a draft at a time.
-
 
 ## 🔢 Step-by-Step: Enabling Draft Handling
 
@@ -87,7 +85,6 @@ with draft
 - Test create, edit, discard, activate scenarios.
 - Check autosave and locking behavior.
 
-
 ## 🔧 Checklist: Validating Draft Functionality
 
 ✅ **Creation**
@@ -121,7 +118,6 @@ with draft
 - System allows recovery of unfinished drafts.
 - System differentiates between user's own drafts and drafts locked by others.
 
-
 ## 🔍 Etag and Total Etag Concepts
 
 ### Etag
@@ -134,13 +130,11 @@ with draft
 - Useful for complex objects where multiple sub-entities (items, schedules, etc.) are involved.
 - If any sub-entity changes, the total etag changes.
 
-**Difference**
 | Aspect          | Etag                        | Total Etag                       |
 |-----------------|------------------------------|-----------------------------------|
 | Scope           | Single entity instance       | Entire business object           |
 | Trigger for Change | Update of this instance only | Update of any part of the object |
 | Usage           | Conflict detection on instance level | Conflict detection on full object |
-
 
 ## 📃 Key Entities and Their Responsibilities
 
@@ -151,14 +145,12 @@ with draft
 | Draft Administrative Data            | Metadata about draft: user, timestamp, status |
 | Behavior Implementation (BO Handler) | Logic for editing, saving, and activating drafts |
 
-
 ## 🖋️ Draft-Enabled Behavior Definition
 
 When defining behavior for a draft-enabled entity:
 - **draft table** must be specified.
 - Special actions such as `prepare`, `activate`, `discard`, `resume` are automatically provided.
 - Custom logic can be added via determinations, validations, or additional actions.
-
 
 ## 🔧 Draft Administrative Data
 
@@ -171,7 +163,6 @@ Drafts are associated with **DraftAdministrativeData**, containing:
 
 These fields allow safe collaboration and consistency checks.
 
-
 ## 🔍 Important Considerations
 
 - Drafts can be autosaved periodically.
@@ -179,7 +170,6 @@ These fields allow safe collaboration and consistency checks.
 - Locks prevent multiple users from editing the same draft.
 - If an error occurs during editing, the draft persists, allowing retry.
 - Deletion of a draft without activation is also possible (discard).
-
 
 ## 📚 Best Practices
 
@@ -189,7 +179,6 @@ These fields allow safe collaboration and consistency checks.
 - Utilize **total etags** for complex BOs to ensure consistency across compositions.
 - Implement validations both at the draft and activation phases.
 - Regularly clean up obsolete or abandoned drafts to optimize storage.
-
 
 ## 🔬 Practical Insights from Minimal RAP Example
 
@@ -204,6 +193,13 @@ The [Simplest SAP RAP Example - Draft Notes](https://github.com/fr0ster/simplest
 
 This minimal project helps visualize the full draft flow within a real-world RAP application.
 
+## 🔗 Summary
+
+- 📝 **Draft handling** allows safe editing without affecting active data until explicitly activated.
+- 🔒 **Administrative metadata** ensures tracking and locking of draft records.
+- 🧩 **ETag and Total ETag** are critical for conflict detection on both instance and composition levels.
+- ⚙️ **System actions** like (`edit`, `discard`, `activate`) must be implemented carefully for a smooth user experience.
+- 🧹 **Regular cleanup** of old drafts and validation at activation ensures system integrity.
 
 ## 🔗 References
 
