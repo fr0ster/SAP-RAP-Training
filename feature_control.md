@@ -10,7 +10,7 @@
 - [Best Practices for Feature Control](#best-practices-for-feature-control)
 - [Common Scenarios](#common-scenarios)
 - [Mistakes to Avoid](#mistakes-to-avoid)
-- [References]
+- [References](#references)
 
 ---
 
@@ -22,6 +22,8 @@ It allows fine-grained control over instance behavior at runtime without modifyi
 
 > **Example:** Enabling "Cancel Order" only when the order status is 'Submitted' and not 'Completed'.
 
+[📚 Learn more: Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)
+
 ---
 
 ## 🎉 Why Use Feature Control?
@@ -30,6 +32,8 @@ It allows fine-grained control over instance behavior at runtime without modifyi
 - **User Guidance**: Prevent invalid actions and guide users through correct processes.
 - **Security and Compliance**: Restrict access to sensitive operations under certain conditions.
 - **Performance Optimization**: Minimize unnecessary backend validations and checks.
+
+[📖 Further reading: Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)
 
 ---
 
@@ -43,6 +47,8 @@ It allows fine-grained control over instance behavior at runtime without modifyi
 
 > Design-time: "Can this feature ever exist?"  
 > Runtime: "Is this feature currently available?"
+
+[🔗 Related: SAP Tutorials — ABAP RAP Fundamentals](https://developers.sap.com/group.abap-env-restful-application-programming.html)
 
 ---
 
@@ -63,6 +69,8 @@ lock master
 **Notes:**
 - The `feature-control` keyword links a feature (like an action) to runtime control logic.
 - You can define feature control for actions, fields, and other operations.
+
+[📑 Official Guide: Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)
 
 ---
 
@@ -97,6 +105,8 @@ ENDMETHOD.
 - **result_features** indicates which features are enabled or disabled.
 - Constants like `IF_ABAP_BEHV=>FC_ENABLED` and `IF_ABAP_BEHV=>FC_DISABLED` are used.
 
+[🛠️ Deep Dive: Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)
+
 ---
 
 ## 🔄 Best Practices for Feature Control
@@ -109,6 +119,8 @@ ENDMETHOD.
 | Separate feature checks from validations | Avoid confusion of purposes |
 | Always return consistent results | Unclear states can cause frontend errors |
 
+[🧠 Tips: SAP Community Blog — Feature Control in RAP](https://community.sap.com/topics/abap/feature-control-rap-best-practices)
+
 ---
 
 ## 💡 Common Scenarios
@@ -117,6 +129,8 @@ ENDMETHOD.
 - **Field Editability**: Make fields editable/read-only dynamically.
 - **Instance Lifecycle Control**: Enable deletion only under specific circumstances.
 - **Multi-Step Processes**: Progressively unlock features step-by-step.
+
+[📋 Examples: Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)
 
 ---
 
@@ -128,12 +142,24 @@ ENDMETHOD.
 - **Mixing validation and feature control responsibilities**.
 - **Failing to cover edge cases**, e.g., status transitions.
 
+[🚫 Common Pitfalls: SAP Community Discussion](https://community.sap.com/topics/abap/feature-control-rap-best-practices)
+
 ---
 
 ## 🔗 References
 
-- [SAP Help Portal: Feature Control in RAP](https://help.sap.com/docs/abap-cloud/abap-rap/feature-control)
-- [SAP Official Tutorials on RAP](https://developers.sap.com/group.abap-env-restful-application-programming.html)
+- [Developing Feature Control | SAP Help Portal](https://help.sap.com/docs/abap-cloud/abap-rap/developing-feature-control)  
+  _Describes how to define and implement feature control for actions, fields, and operations in RAP._
+- [Feature Control Overview | SAP Help Portal](https://help.sap.com/docs/btp/sap-business-application-studio/feature-control)  
+  _General overview of feature control especially for SAP Fiori UI contexts._
+- [RAP - Feature Control - ABAP Keyword Documentation](https://help.sap.com/doc/abapdocu_latest_index_htm/latest/en-US/index.htm?file=abaprap_feature_control.htm)  
+  _Technical ABAP keyword documentation explaining Feature Control syntax and usage in RAP._
+- [SAP Tutorials: ABAP RESTful Application Programming Model](https://developers.sap.com/group.abap-env-restful-application-programming.html)  
+  _Step-by-step guided tutorials including exercises with Feature Control._
+- [SAP Community Blog — Feature Control in RAP: Best Practices](https://community.sap.com/topics/abap/feature-control-rap-best-practices)  
+  _Community blog article explaining practical scenarios and common pitfalls._
+- [SAP Press — ABAP RAP Book (Chapter on Feature Control)](https://www.sap-press.com/abap-restful-application-programming-model_5085/)  
+  _In-depth explanation in the official SAP Press book._
 
 ---
 
