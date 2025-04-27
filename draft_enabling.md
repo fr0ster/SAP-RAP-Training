@@ -5,7 +5,8 @@
 - [Introduction to Draft Handling](#-introduction-to-draft-handling)
 - [Purpose and Benefits of Draft Handling](#-purpose-and-benefits-of-draft-handling)
 - [How Draft Handling Works](#-how-draft-handling-works)
-- [Enabling Draft Handling](#-enabling-draft-handling)
+- [Step-by-Step: Enabling Draft Handling](#-step-by-step-enabling-draft-handling)
+- [Checklist: Validating Draft Functionality](#-checklist-validating-draft-functionality)
 - [Etag and Total Etag Concepts](#-etag-and-total-etag-concepts)
 - [Key Entities and Their Responsibilities](#-key-entities-and-their-responsibilities)
 - [Draft-Enabled Behavior Definition](#-draft-enabled-behavior-definition)
@@ -41,20 +42,27 @@ When draft handling is enabled for a RAP business object:
 - Locking mechanisms ensure that only one user edits a draft at a time.
 
 
-## 🔑 Enabling Draft Handling
+## 🔢 Step-by-Step: Enabling Draft Handling
 
-To enable draft handling for a RAP business object:
+### Step 1: Define Draft Table
+- Create a database table for draft instances.
+- Typically similar structure to active table plus technical fields.
 
-1. **Behavior Definition**:
-   - Add the `draft enabled` keyword in the behavior definition.
-2. **Draft Table**:
-   - Define and generate a separate database table for storing draft instances.
-3. **Draft Administrative Data**:
-   - Link the entity to standard SAP administrative draft data (e.g., `CDS view: DraftAdministrativeData`).
-4. **Action Implementations**:
-   - Implement system actions like `edit`, `discard`, `activate` as needed.
+### Step 2: Extend the CDS View
+- Extend the CDS entity with draft-specific annotations.
+```abap
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@ObjectModel:
+  {
+    draftEnabled: true,
+    writeActivePersistence: 'ZSalesOrder',
+    draftTable: 'ZSalesOrder_Draft'
+  }
+define root view entity ZI_SalesOrder ...
+```
 
-**Example**
+### Step 3: Update Behavior Definition
+- Add `with draft` and specify `draft table`.
 ```abap
 define behavior for ZI_SalesOrder
 persistent table ZSalesOrder
@@ -65,6 +73,52 @@ with draft
   define behavior draft;
 }
 ```
+
+### Step 4: Link Draft Administrative Data
+- Either reuse SAP's standard DraftAdministrativeData or define a new administrative CDS view.
+- Map administrative fields (`DraftUUID`, `LastChangedBy`, etc.).
+
+### Step 5: Implement Required Actions
+- Implement at least basic system actions: `edit`, `discard`, `prepare`, `activate`.
+- Extend logic if custom behavior needed during draft lifecycle.
+
+### Step 6: Test the Behavior
+- Test create, edit, discard, activate scenarios.
+- Check autosave and locking behavior.
+
+
+## 🔧 Checklist: Validating Draft Functionality
+
+✅ **Creation**
+- Draft is created when you start editing an active document.
+- Draft UUID is correctly generated.
+
+✅ **Modification**
+- Changes are saved into the draft version without affecting the active version.
+- Autosave periodically stores the draft.
+
+✅ **Locking**
+- When one user starts editing, another user attempting to edit sees a lock message.
+
+✅ **Activation**
+- Upon activation, draft changes are merged into the active version.
+- Draft entry is deleted after successful activation.
+
+✅ **Discard**
+- User can discard a draft without affecting the active version.
+- Draft record is deleted on discard.
+
+✅ **Conflict Management (Etag / Total Etag)**
+- Etag validation prevents overwriting another user's changes.
+- Total etag changes if any dependent entity (composition) is modified.
+
+✅ **Draft Administrative Data**
+- Administrative data like `LastChangedBy` and `LastChangedAt` are updated correctly.
+- LockedBy field shows correct editor during editing.
+
+✅ **Fallback and Recovery**
+- System allows recovery of unfinished drafts.
+- System differentiates between user's own drafts and drafts locked by others.
 
 
 ## 🔍 Etag and Total Etag Concepts
@@ -87,7 +141,7 @@ with draft
 | Usage           | Conflict detection on instance level | Conflict detection on full object |
 
 
-## 🔢 Key Entities and Their Responsibilities
+## 📃 Key Entities and Their Responsibilities
 
 | Entity                               | Responsibility                                |
 |--------------------------------------|-----------------------------------------------|
@@ -141,8 +195,7 @@ These fields allow safe collaboration and consistency checks.
 - [SAP Help Portal — Enabling Draft Handling](https://help.sap.com/docs/abap-cloud/abap-rap/abap-restful-application-programming-model/draft-handling-in-rap)
 - [SAP Help Portal — Draft Administrative Data](https://help.sap.com/docs/abap-cloud/abap-rap/abap-restful-application-programming-model/draft-administrative-data)
 - [SAP Help Portal — Etags and Total Etags](https://help.sap.com/docs/abap-cloud/abap-rap/abap-restful-application-programming-model/etag-handling)
+- [Simplest SAP RAP Example - Draft Notes](https://github.com/fr0ster/simplest_sap_rap_example/blob/master/7th_iteration/notes.md)
 
 ---
-
-Would you also like a visual diagram showing how draft handling (draft vs active vs administrative data) flows internally?
 
