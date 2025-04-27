@@ -19,7 +19,7 @@
 
 # 🛡️ What is a Validation in RAP
 
-A **Validation** in SAP RAP is a passive, automatically invoked implementation that checks data consistency, integrity, or business rules during the transactional lifecycle.
+A **Validation** in SAP RAP is an optional part of the business object behavior that checks the consistency of business object instances based on trigger conditions.
 
 > 🖊️ Validations do **not** modify data — they **only verify** it.
 
@@ -47,12 +47,12 @@ They are used to:
 define behavior for /DMO/I_Travel_M alias travel
   ...
 {
- ...
+  ...
   validation validateCustomer on save { create; field customer_id; }
   validation validateAgency   on save { create; field agency_id; }
   validation validateDates    on save { create; field begin_date, end_date; }
   validation validateStatus   on save { create; field overall_status; }
-  validation validateCurrencyCode on save { create; field currency_code;  }
+  validation validateCurrencyCode on save { create; field currency_code; }
   validation validateBookingFee   on save { create; field booking_fee; }
 }
 ```
@@ -64,16 +64,8 @@ define behavior for /DMO/I_Travel_M alias travel
 # 🛠️ Implementing Validations in Behavior Implementation
 
 ```abap
-CLASS ltc_managed DEFINITION DEFERRED FOR TESTING.
-
-  PRIVATE SECTION.
-
-    METHODS validate_dates  FOR VALIDATE ON SAVE
-      IMPORTING keys FOR travel~validatedates.
-
-ENDCLASS.
-
 CLASS lhc_travel IMPLEMENTATION.
+
   METHOD validate_dates.
 
     READ ENTITIES OF /DMO/I_Travel_M IN LOCAL MODE
@@ -84,7 +76,7 @@ CLASS lhc_travel IMPLEMENTATION.
 
     LOOP AT travels INTO DATA(travel).
 
-      IF travel-end_date < travel-begin_date.  "end_date before begin_date
+      IF travel-end_date < travel-begin_date.
 
         APPEND VALUE #( %tky = travel-%tky ) TO failed-travel.
 
@@ -99,9 +91,9 @@ CLASS lhc_travel IMPLEMENTATION.
                         %element-end_date     = if_abap_behv=>mk-on
                      ) TO reported-travel.
 
-      ELSEIF travel-begin_date < cl_abap_context_info=>get_system_date( ).  "begin_date must be in the future
+      ELSEIF travel-begin_date < cl_abap_context_info=>get_system_date( ).
 
-        APPEND VALUE #( %tky        = travel-%tky ) TO failed-travel.
+        APPEND VALUE #( %tky = travel-%tky ) TO failed-travel.
 
         APPEND VALUE #( %tky = travel-%tky
                         %msg = NEW /dmo/cm_flight_messages(
@@ -110,6 +102,7 @@ CLASS lhc_travel IMPLEMENTATION.
                         %element-begin_date  = if_abap_behv=>mk-on
                         %element-end_date    = if_abap_behv=>mk-on
                       ) TO reported-travel.
+
       ENDIF.
 
     ENDLOOP.
@@ -125,11 +118,18 @@ ENDCLASS.
 
 # 🧐 When to Use Validations
 
-| Use Validations | Avoid Validations |
-|:----------------|:------------------|
-| Check consistency and completeness | Modify or derive data (use Determinations) |
-| Enforce business rules | Trigger business processes (use Actions) |
-| Validate user input | Automatically adjust fields |
+Use a Validation when you need to:
+
+- Ensure data consistency and correctness of business object instances based on field changes or modify operations.
+- Automatically prevent inconsistent data from being saved by rejecting invalid instances into the `FAILED-<entity>` table.
+- Provide consumer-friendly warning or error messages through the `REPORTED-<entity>` table.
+- Validate data without modifying it.
+- Optimize runtime by tying validations to specific fields or operations (field-based validations).
+
+> 📖 **Important**:  
+> - Validations must not use EML modify statements.  
+> - In managed scenarios with draft, it is recommended to assign validations to the `PREPARE` phase for correct messaging.  
+> - Execution order of multiple validations triggered by the same event is not guaranteed.
 
 ---
 
@@ -182,7 +182,8 @@ The following points summarize SAP official guidance:
 - Validations ensure that the transactional data is consistent and correct.
 - They must not modify the data they check.
 - Field-based validations help optimize performance by triggering only when necessary.
-- Validation failures are collected in the `failed` table and are presented as messages to the user.
+- Validation failures are collected in the `FAILED-<entity>` table and are presented as errors to the user, while `REPORTED-<entity>` holds warning or informational messages.
+- Execution order of validations is undefined if multiple validations are triggered by the same event.
 
 > 📊 [Reference: SAP Help — Validations Overview](https://help.sap.com/docs/abap-cloud/abap-rap/validations)
 
@@ -205,11 +206,10 @@ Field-Based Validations are triggered **only when specified fields change**.
 This optimization minimizes unnecessary checks.
 
 ```abap
-define behavior for ZI_SalesOrder
-persistent table ZSalesOrder
-lock master
+define behavior for /DMO/I_Travel_M alias travel
+  ...
 {
-  validation validate_quantity on modify field quantity;
+  validation validateDates on save { create; field begin_date, end_date; }
 }
 ```
 
