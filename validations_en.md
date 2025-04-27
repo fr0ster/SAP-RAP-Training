@@ -13,6 +13,7 @@
 - [Key Concepts from SAP Documentation](#key-concepts-from-sap-documentation)
 - [Quality Checklist for Validations](#quality-checklist-for-validations)
 - [Field-Based Validations](#field-based-validations)
+- [Validation vs Determination: Quick Comparison](#validation-vs-determination-quick-comparison)
 - [References](#references)
 
 ---
@@ -126,9 +127,9 @@ Use a Validation when you need to:
 - Validate data without modifying it.
 - Optimize runtime by tying validations to specific fields or operations (field-based validations).
 
-> 📖 **Important**:  
-> - Validations must not use EML modify statements.  
-> - In managed scenarios with draft, it is recommended to assign validations to the `PREPARE` phase for correct messaging.  
+> 📖 **Important**:
+> - Validations must not use EML modify statements.
+> - In managed scenarios with draft, it is recommended to assign validations to the `PREPARE` phase for correct messaging.
 > - Execution order of multiple validations triggered by the same event is not guaranteed.
 
 ---
@@ -146,7 +147,7 @@ Use a Validation when you need to:
 
 ---
 
-# 🗕️ Typical Usage Scenarios
+# 📅 Typical Usage Scenarios
 
 ## Greenfield
 
@@ -202,7 +203,7 @@ The following points summarize SAP official guidance:
 
 # 📈 Field-Based Validations
 
-Field-Based Validations are triggered **only when specified fields change**.  
+Field-Based Validations are triggered **only when specified fields change**.
 This optimization minimizes unnecessary checks.
 
 ```abap
@@ -214,6 +215,23 @@ define behavior for /DMO/I_Travel_M alias travel
 ```
 
 > 📊 [Reference: SAP Help — Field-Based Validation](https://help.sap.com/docs/abap-cloud/abap-rap/implementing-validations)
+
+---
+
+# 🗕️ Validation vs Determination: Quick Comparison
+
+| Aspect | Validation | Determination |
+|:-------|:-----------|:--------------|
+| Purpose | Verify data consistency and enforce business rules | Derive, adjust, or calculate data automatically |
+| Data Modification | ❌ Not allowed | ✅ Allowed |
+| Trigger | Field change or operation (e.g., create, modify, save) | Field change or operation (e.g., create, modify, before save) |
+| Effect if Check Fails | Block save, return error/warning | No blocking, data is auto-adjusted |
+| Outputs | FAILED-<entity> and REPORTED-<entity> structures | Adjusted transactional buffer without user intervention |
+| Typical Usage | Mandatory field check, value range validation, logical consistency | Default values, calculated fields, status updates before save |
+
+> 🔗 **Key Rule:**
+> - Use **Validations** when **checking** correctness without modifying data.
+> - Use **Determinations** when **modifying** or **deriving** data automatically.
 
 ---
 
