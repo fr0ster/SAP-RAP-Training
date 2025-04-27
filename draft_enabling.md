@@ -13,6 +13,7 @@
 - [Draft Administrative Data](#-draft-administrative-data)
 - [Important Considerations](#-important-considerations)
 - [Best Practices](#-best-practices)
+- [Practical Insights from Minimal RAP Example](#-practical-insights-from-minimal-rap-example)
 - [References](#-references)
 
 ---
@@ -23,7 +24,6 @@ Draft handling is a built-in mechanism of the **ABAP RESTful Application Program
 
 This mechanism enhances user experience by providing **autosave**, **multi-step editing**, and **error recovery** capabilities.
 
-[Learn more](https://help.sap.com/docs/abap-cloud/abap-rap/draft-handling-in-rap)
 
 ## 📅 Purpose and Benefits of Draft Handling
 
@@ -44,8 +44,6 @@ When draft handling is enabled for a RAP business object:
 
 
 ## 🔢 Step-by-Step: Enabling Draft Handling
-
-[Detailed guide](https://help.sap.com/docs/abap-cloud/abap-rap/enabling-draft-handling-in-rap)
 
 ### Step 1: Define Draft Table
 - Create a database table for draft instances.
@@ -126,8 +124,6 @@ with draft
 
 ## 🔍 Etag and Total Etag Concepts
 
-[More about ETags](https://help.sap.com/docs/abap-cloud/abap-rap/handling-etags-in-rap)
-
 ### Etag
 - The **etag** represents a fingerprint of a **single entity**'s current state.
 - It changes whenever the entity instance is updated (either draft or active).
@@ -166,8 +162,6 @@ When defining behavior for a draft-enabled entity:
 
 ## 🔧 Draft Administrative Data
 
-[Detailed view](https://help.sap.com/docs/abap-cloud/abap-rap/draft-administrative-data-in-rap)
-
 Drafts are associated with **DraftAdministrativeData**, containing:
 - **Draft UUID**: Unique draft identifier
 - **Last Changed By**: User ID
@@ -197,12 +191,23 @@ These fields allow safe collaboration and consistency checks.
 - Regularly clean up obsolete or abandoned drafts to optimize storage.
 
 
+## 🔬 Practical Insights from Minimal RAP Example
+
+The [Simplest SAP RAP Example - Draft Notes](https://github.com/fr0ster/simplest_sap_rap_example/blob/master/7th_iteration/notes.md) illustrates key practical behaviors of draft handling:
+
+- When editing a record, a draft is created automatically.
+- Locking is managed automatically: once a draft exists, active instances are locked.
+- Activation deletes the draft and updates the active entity.
+- If editing is canceled, the draft is discarded without affecting the active entity.
+- Administrative data such as `DraftUUID`, `LastChangedBy`, and `LastChangedAt` are properly updated during the draft lifecycle.
+- Proper locking ensures no simultaneous edits of the same draft by multiple users.
+
+This minimal project helps visualize the full draft flow within a real-world RAP application.
+
+
 ## 🔗 References
 
-- [SAP Help Portal — Draft Handling Overview](https://help.sap.com/docs/abap-cloud/abap-rap/draft-handling-in-rap)
-- [SAP Help Portal — Enabling Draft Handling (Step-by-Step)](https://help.sap.com/docs/abap-cloud/abap-rap/enabling-draft-handling-in-rap)
-- [SAP Help Portal — Draft Administrative Data](https://help.sap.com/docs/abap-cloud/abap-rap/draft-administrative-data-in-rap)
-- [SAP Help Portal — Handling ETags and Total ETags](https://help.sap.com/docs/abap-cloud/abap-rap/handling-etags-in-rap)
+- [SAP Help Portal — ABAP RESTful Application Programming Model](https://help.sap.com/docs/abap-cloud/abap-rap/abap-restful-application-programming-model)
 - [Simplest SAP RAP Example - Draft Notes](https://github.com/fr0ster/simplest_sap_rap_example/blob/master/7th_iteration/notes.md)
 
 ---
